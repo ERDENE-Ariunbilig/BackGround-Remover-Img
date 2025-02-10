@@ -1,26 +1,27 @@
 const express = require("express");
 const multer = require("multer");
 const cors = require("cors");
-const { exec } = require("child_process");
-const fs = require("fs");
+const path = require("path");
 
 const app = express();
-app.use(cors()); // Allow frontend access
+app.use(cors());
+app.use(express.static("uploads"));
 
-const upload = multer({ dest: "uploads/" });
-
-app.post("/remove-bg", upload.single("image"), (req, res) => {
-    const inputPath = req.file.path;
-    const outputPath = `uploads/output-${Date.now()}.png`;
-
-    exec(`rembg i ${inputPath} ${outputPath}`, (error) => {
-        if (error) return res.status(500).send("Error processing image");
-
-        res.download(outputPath, () => {
-            fs.unlinkSync(inputPath); // Delete input file after processing
-            fs.unlinkSync(outputPath); // Delete output file after download
-        });
-    });
+const storage = multer.diskStorage({
+  destination: "uploads/",
+  filename: (req, file, cb) => {
+    cb(null, Date.now() + path.extname(file.originalname));
+  },
 });
 
-app.listen(3000, () => console.log("✅ Background Remover API running on port 3000"));
+const upload = multer({ storage });
+
+app.post("/upload", upload.single("image"), (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ error: "No file uploaded" });
+  }
+  res.json({ filePath: `/uploads/${req.file.filename}` });
+});
+
+const PORT = 5000;
+app.listen(PORT, () => console.log(`🚀 Server running on http://localhost:${PORT}`));

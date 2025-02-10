@@ -1,15 +1,17 @@
 async function uploadImage() {
-    let fileInput = document.getElementById("upload");
-    let file = fileInput.files[0];
+    const fileInput = document.getElementById("uploadInput");
+    const file = fileInput.files[0];
+    if (!file) return alert("Please select an image!");
 
-    let formData = new FormData();
+    const formData = new FormData();
     formData.append("image", file);
 
-    let response = await fetch("http://localhost:3000/remove-bg", {
+    const response = await fetch("http://localhost:5000/upload", {
         method: "POST",
         body: formData
     });
+    const data = await response.json();
 
-    let blob = await response.blob();
-    document.getElementById("output").src = URL.createObjectURL(blob);
+    document.getElementById("outputImage").src = "http://localhost:5000" + data.filePath;
+    document.getElementById("outputImage").style.display = "block";
 }
